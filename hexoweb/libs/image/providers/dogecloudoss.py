@@ -4,14 +4,13 @@
 @Blog      : https://tnxg.loyunet.cn
 """
 
-from datetime import date
+from datetime import datetime
 import boto3
 from hashlib import md5
 from hashlib import sha1
 import hmac
 import requests
 import json
-import urllib
 
 from ..core import Provider
 from ..replace import replace_path
@@ -55,9 +54,10 @@ class DogeCloudOss(Provider):
         return response.json()
 
     def upload(self, file):
-        now = date.today()
+        now = datetime.now()
         photo_stream = file.read()
-        path = replace_path(self.path, file, now)
+        file_md5 = md5(photo_stream).hexdigest()
+        path = replace_path(self.path, file, file_md5, now)
 
         res = self.dogecloud_api()
         if res['code'] != 200:
@@ -75,4 +75,4 @@ class DogeCloudOss(Provider):
         bucket.put_object(Key=path, Body=photo_stream,
                           ContentType=file.content_type)
 
-        return replace_path(self.prev_url, file, now)
+        return replace_path(self.prev_url, file, file_md5, now)

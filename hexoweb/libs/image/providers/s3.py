@@ -4,9 +4,9 @@
 @Blog      : https://www.oplog.cn
 """
 
-from datetime import date
 import boto3
 from hashlib import md5
+from datetime import datetime
 
 from ..core import Provider
 from ..replace import replace_path
@@ -34,9 +34,10 @@ class S3(Provider):
         self.prev_url = prev_url
 
     def upload(self, file):
-        now = date.today()
+        now = datetime.now()
         photo_stream = file.read()
-        path = replace_path(self.path, file, now)
+        file_md5 = md5(photo_stream).hexdigest()
+        path = replace_path(self.path, file, file_md5, now)
 
         s3 = boto3.resource(
             service_name='s3',
@@ -49,4 +50,4 @@ class S3(Provider):
         bucket = s3.Bucket(self.bucket)
         bucket.put_object(Key=path, Body=photo_stream, ContentType=file.content_type)
 
-        return replace_path(self.prev_url, file, now)
+        return replace_path(self.prev_url, file, file_md5, now)
